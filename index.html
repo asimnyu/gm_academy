@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GM Academy - Commander Yuvan</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div id="cloud-status"></div>
+
+    <div id="inquiry-box" style="display:none;"></div>
+
+    <div id="login-screen" class="overlay-screen">
+        <h1 class="glitch" data-text="COMMANDER YUVAN">COMMANDER YUVAN</h1>
+        <h2 class="sub-glitch">MISSION CONTROL v1.0</h2>
+        <div class="login-box">
+            <input type="text" id="player-name" placeholder="IDENTIFICATION REQUIRED..." autocomplete="off">
+            <button class="login-btn" onclick="enterAcademy()">INITIATE SYSTEM</button>
+        </div>
+    </div>
+
+    <div id="main-game" style="display:none;">
+        <div id="board" style="width: 100%; max-width: 450px; margin: auto;"></div>
+        <div id="dashboard">
+            <h2 id="display-name">COMMANDER YUVAN</h2>
+            <div class="stats-row">
+                <div class="stat-item">COINS: <span id="coins">0</span></div>
+                <div class="stat-item">RATING: <span id="rating">950</span></div>
+            </div>
+            <p id="mission-text">Awaiting Protocol...</p>
+            <div class="jukebox-controls">
+                <button onclick="playTrack(1)">Cinematic</button>
+                <button onclick="playTrack(6)">Drifting (Zen)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
