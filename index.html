@@ -2,46 +2,211 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GM Academy - Commander Yuvan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GM Academy</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://chessboardjs.com/img/chesspieces/wikipedia/wN.png">
+
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-</head>
-<body>
-    <div id="cloud-status"></div>
-
-    <div id="inquiry-box" style="display:none;"></div>
-
-    <div id="login-screen" class="overlay-screen">
-        <h1 class="glitch" data-text="COMMANDER YUVAN">COMMANDER YUVAN</h1>
-        <h2 class="sub-glitch">MISSION CONTROL v1.0</h2>
-        <div class="login-box">
-            <input type="text" id="player-name" placeholder="IDENTIFICATION REQUIRED..." autocomplete="off">
-            <button class="login-btn" onclick="enterAcademy()">INITIATE SYSTEM</button>
-        </div>
-    </div>
-
-    <div id="main-game" style="display:none;">
-        <div id="board" style="width: 100%; max-width: 450px; margin: auto;"></div>
-        <div id="dashboard">
-            <h2 id="display-name">COMMANDER YUVAN</h2>
-            <div class="stats-row">
-                <div class="stat-item">COINS: <span id="coins">0</span></div>
-                <div class="stat-item">RATING: <span id="rating">950</span></div>
-            </div>
-            <p id="mission-text">Awaiting Protocol...</p>
-            <div class="jukebox-controls">
-                <button onclick="playTrack(1)">Cinematic</button>
-                <button onclick="playTrack(6)">Drifting (Zen)</button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="game.js"></script>
+    
+    <style>
+        body { background: #000; color: #00d1ff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; touch-action: manipulation; }
+        .overlay-screen { position: fixed; width: 100%; height: 100%; background: black; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+        
+        /* CENTERED HUD & LARGE INPUT */
+        .glitch { font-size: clamp(2rem, 8vw, 4rem); text-shadow: 0 0 20px #00d1ff; margin-bottom: 20px; }
+        input { background: transparent; border: none; border-bottom: 3px solid #00d1ff; color: #fff; font-size: 3.5rem; text-align: center; width: 80%; outline: none; margin: 40px 0; }
+        .glow-btn { background: none; border: 2px solid #00ff96; color: #00ff96; padding: 25px 60px; font-size: 1.5rem; border-radius: 50px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* MISSION HUB */
+        .protocol-btn { background: rgba(0, 209, 255, 0.1); border: 1px solid #00d1ff; color: #00d1ff; width: 85%; max-width: 500px; padding: 30px; margin: 15px; font-size: 1.4rem; border-radius: 12px; transition: 0.3s; }
+        .protocol-btn:active { background: #00d1ff; color: black; box-shadow: 0 0 30px #00d1ff; }
+
+        /* BOARD SECTION */
+        #main-game { display: none; width: 100vw; height: 100vh; }
+        #board-container { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #board { width: 88vh; max-width: 92vw; border: 3px solid #333; }
+        
+        /* JUKEBOX SIDEBAR */
+        #sidebar { position: fixed; right: 0; top: 0; height: 100vh; width: 300px; background: rgba(10, 10, 10, 0.98); border-left: 2px solid #00d1ff; transition: 0.4s; z-index: 2000; display: flex; }
+        #sidebar.collapsed { right: -300px; }
+        #sidebar-toggle { width: 50px; background: #00d1ff; color: #000; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
+        
+        .track-item { width: 90%; padding: 18px; margin: 10px 0; border: 1px solid #333; text-align: center; cursor: pointer; font-size: 1.1rem; }
+        .track-item.active { background: #00ff96; color: black; box-shadow: 0 0 15px #00ff96; font-weight: bold; }
+        
+        /* TACTICAL OVERLAY */
+        .inquiry-overlay { position: absolute; top: 15%; background: rgba(0,0,0,0.95); border: 2px solid #00ff96; padding: 25px; width: 85%; max-width: 550px; border-radius: 20px; display: none; z-index: 3000; box-shadow: 0 0 50px rgba(0,255,150,0.2); }
+        .highlight-weak { box-shadow: inset 0 0 35px #ff0055 !important; background: rgba(255,0,85,0.4) !important; }
+        
+        .stats-row { display: flex; justify-content: center; gap: 60px; font-size: 2rem; color: #00ff96; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="overlay-screen">
+        <h1 class="glitch">COMMANDER YUVAN</h1>
+        <input type="text" id="player-name" placeholder="IDENTIFY...">
+        <button class="glow-btn" onclick="enterAcademy()">INITIATE SYSTEM</button>
+    </div>
+
+    <div id="protocol-screen" class="overlay-screen" style="display:none;">
+        <h2 style="font-size: 2.5rem; color: #00ff96; margin-bottom: 40px;">SELECT MISSION</h2>
+        <button class="protocol-btn" onclick="startProtocol('LEARN')">01 OPENING BIOPSY</button>
+        <button class="protocol-btn" onclick="startProtocol('MEMORY')">02 REPERTOIRE STRIKE</button>
+        <button class="protocol-btn" onclick="startProtocol('SCAN')">03 TACTICAL SCAN</button>
+    </div>
+
+    <div id="inquiry-box" class="inquiry-overlay">
+        <h3 id="inquiry-title" style="color:#00ff96; text-align:center;">TACTICAL ANALYSIS</h3>
+        <p id="inquiry-text" style="font-size:1.4rem; text-align:center; margin: 20px 0;"></p>
+        <div id="inquiry-options" style="display:flex; flex-direction:column; align-items:center;"></div>
+    </div>
+
+    <div id="main-game">
+        <div id="board-container">
+            <div id="board"></div>
+            <div id="dashboard">
+                <div class="stats-row">
+                    <div>COINS: <span id="coins">0</span></div>
+                    <div>IQ: <span id="rating">950</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidebar" class="collapsed">
+            <div id="sidebar-toggle" onclick="toggleSidebar()"><span>A<br>U<br>D<br>I<br>O</span></div>
+            <div class="sidebar-content" style="flex:1; padding:20px; display:flex; flex-direction:column; align-items:center;">
+                <h4 style="color:#00ff96; letter-spacing:3px;">JUKEBOX</h4>
+                <div id="track-list" style="width:100%"></div>
+                <button onclick="location.reload()" style="margin-top:auto; background:#ff0055; color:white; border:none; padding:20px; width:100%; border-radius:10px; font-weight:bold;">REBOOT SYSTEM</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let board = null, game = new Chess(), currentMusic = null;
+        let gmDatabase = {}; 
+        let score = 0;
+
+        // AUTH & BOT VOICE WELCOME
+        async function enterAcademy() {
+            const name = document.getElementById('player-name').value;
+            if (name.toLowerCase() !== "yuvan") return alert("ACCESS DENIED");
+            
+            playTrack(1); // Start music
+            speak("WELCOME COMMANDER YUVAN. SYSTEM ONLINE.", 0.4); // Autobot Voice
+            
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('protocol-screen').style.display = 'flex';
+            loadJukebox();
+            
+            const res = await fetch('gm_master_database.json');
+            gmDatabase = await res.json();
+        }
+
+        function startProtocol(type) {
+            document.getElementById('protocol-screen').style.display = 'none';
+            document.getElementById('main-game').style.display = 'block';
+            speak("PROTOCOL " + type + " INITIATED.", 0.5);
+            
+            board = Chessboard('board', {
+                draggable: true,
+                position: 'start',
+                onDrop: handleMove,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            });
+        }
+
+        // AUTOMATIC BOT MOVEMENT & INQUIRY LOGIC
+        function handleMove(source, target) {
+            let move = game.move({ from: source, to: target, promotion: 'q' });
+            if (!move) return 'snapback';
+
+            const moveData = gmDatabase["White_Italian"]?.next?.[move.san];
+            
+            if (moveData && moveData.bot_response) {
+                setTimeout(() => {
+                    game.move(moveData.bot_response);
+                    board.position(game.fen());
+                    
+                    if (moveData.biopsy) {
+                        triggerInquiry(moveData.biopsy);
+                    } else if (moveData.tag === "MASTER_REFUTATION") {
+                        speak("Analysis confirmed. Master move.", 0.8);
+                    }
+                }, 700);
+            }
+            updateScore(10);
+        }
+
+        function triggerInquiry(data) {
+            const box = document.getElementById('inquiry-box');
+            document.getElementById('inquiry-text').innerText = data.question;
+            const options = document.getElementById('inquiry-options');
+            options.innerHTML = "";
+            
+            data.answers.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = "protocol-btn";
+                btn.style.width = "90%";
+                btn.innerText = ans.text;
+                btn.onclick = () => {
+                    if (ans.correct) {
+                        speak("Logic confirmed.", 0.9);
+                        updateScore(50);
+                        box.style.display = 'none';
+                        $('*').removeClass('highlight-weak');
+                    } else {
+                        speak("Re-evaluate tactical sector.", 0.2);
+                    }
+                };
+                options.appendChild(btn);
+            });
+
+            if (data.weak_square) $(`.square-${data.weak_square}`).addClass('highlight-weak');
+            box.style.display = 'block';
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        
+        function playTrack(id) {
+            if (currentMusic) currentMusic.pause();
+            currentMusic = new Audio(`assets/music/track${id}.mp3`);
+            currentMusic.loop = true; currentMusic.volume = 0.2;
+            currentMusic.play().catch(e => console.log("Sound blocked."));
+        }
+
+        function loadJukebox() {
+            const list = document.getElementById('track-list');
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'track-item'; btn.innerText = "SQUAD THEME 0" + i;
+                btn.onclick = () => { 
+                    playTrack(i); 
+                    document.querySelectorAll('.track-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                list.appendChild(btn);
+            }
+        }
+
+        function speak(text, pitch) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.pitch = pitch; msg.rate = 0.8;
+            window.speechSynthesis.speak(msg);
+        }
+
+        function updateScore(pts) {
+            score += pts;
+            document.getElementById('coins').innerText = score;
+            document.getElementById('rating').innerText = 950 + Math.floor(score / 10);
+        }
+    </script>
 </body>
 </html>
